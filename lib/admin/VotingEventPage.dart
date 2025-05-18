@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 class CreateVotingEventPage extends StatefulWidget {
   @override
@@ -14,13 +15,44 @@ class _CreateVotingEventPageState extends State<CreateVotingEventPage> {
   final _voterCountController = TextEditingController();
   final _rulesController = TextEditingController();
 
+  
+  DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
+
   final _firestore = FirebaseFirestore.instance;
 
+    Future<void> _pickDate() async {
+    DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null) setState(() => _selectedDate = picked);
+  }
+
+  Future<void> _pickTime() async {
+    TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null) setState(() => _selectedTime = picked);
+  }
+
+
   Future<void> _submitForm() async {
+      final DateTime eventDateTime = DateTime(
+      _selectedDate!.year,
+      _selectedDate!.month,
+      _selectedDate!.day,
+      _selectedTime!.hour,
+      _selectedTime!.minute,
+    );
     if (_formKey.currentState!.validate()) {
       final eventData = {
         'eventName': _eventNameController.text.trim(),
-        'timeLimit': int.tryParse(_timeLimitController.text.trim()) ?? 0,
+        // 'timeLimit': int.tryParse(_timeLimitController.text.trim()) ?? 0,
+        'timeLimit': eventDateTime.toIso8601String(),
         'candidates': int.tryParse(_candidateCountController.text.trim()) ?? 0,
         'voters': int.tryParse(_voterCountController.text.trim()) ?? 0,
         'rules': _rulesController.text.trim(),
@@ -30,7 +62,7 @@ class _CreateVotingEventPageState extends State<CreateVotingEventPage> {
       try {
         await _firestore.collection('voting_events').add(eventData);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ Voting event created')));
-        Navigator.pop(context);
+        // Navigator.pop(context);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ Failed to create event')));
       }
@@ -49,6 +81,12 @@ class _CreateVotingEventPageState extends State<CreateVotingEventPage> {
 
   @override
   Widget build(BuildContext context) {
+      final formattedDate = _selectedDate != null
+        ? DateFormat.yMMMd().format(_selectedDate!)
+        : "Select Date";
+    final formattedTime = _selectedTime != null
+        ? _selectedTime!.format(context)
+        : "Select Time";
     return Scaffold(
 
       body: Padding(
@@ -62,12 +100,30 @@ class _CreateVotingEventPageState extends State<CreateVotingEventPage> {
                 decoration: InputDecoration(labelText: "Event Name"),
                 validator: (value) => value!.isEmpty ? "Enter event name" : null,
               ),
-              TextFormField(
-                controller: _timeLimitController,
-                decoration: InputDecoration(labelText: "Time Limit (in minutes)"),
-                keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty ? "Enter time limit" : null,
-              ),
+              // TextFormField(
+              //   controller: _timeLimitController,
+              //   decoration: InputDecoration(labelText: "Time Limit (in minutes)"),
+              //   keyboardType: TextInputType.number,
+              //   validator: (value) => value!.isEmpty ? "Enter time limit" : null,
+              // ),
+                 SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _pickDate,
+                    child: Text(formattedDate),
+                  ),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _pickTime,
+                    child: Text(formattedTime),
+                  ),
+                ),
+              ],
+            ),
               TextFormField(
                 controller: _candidateCountController,
                 decoration: InputDecoration(labelText: "Number of Candidates"),

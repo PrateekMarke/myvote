@@ -1,12 +1,13 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:myvote/admin/admin_home.dart';
+import 'package:myvote/candidate/candidate_home.dart';
 
 import 'package:myvote/candidate/registration.dart';
-import 'package:myvote/login.dart';
+import 'package:myvote/auth/login.dart';
 import 'package:myvote/student/student_home.dart';
 
-import 'package:myvote/welcome.dart';
+import 'package:myvote/auth/welcome.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,7 +27,8 @@ class MyApp extends StatelessWidget {
   initialRoute: '/',
 routes: {
   '/': (context) => WelcomePage(),
-  '/candidateRegister': (context) => CandidateRegisterPage(),
+  '/candidateHome': (context) => CandidateHomePage(),
+  '/candidateRegister': (context) => CandidateRegistrationPage(),
   '/studentDashboard': (context) => StudentDashboard(),
   '/managerDashboard': (context) => ManagerDashboard(),
   

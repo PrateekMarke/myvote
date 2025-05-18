@@ -4,11 +4,8 @@ import 'user_role.dart'; // import your global role file
 class WelcomePage extends StatelessWidget {
   void onRoleSelected(BuildContext context, String role) {
     UserRole.selectedRole = role;
-    if (role == 'candidate') {
-      Navigator.pushNamed(context, '/candidateRegister');
-    } else {
-      Navigator.pushNamed(context, '/login');
-    }
+         Navigator.pushNamed(context, '/login');
+
   }
 
   @override

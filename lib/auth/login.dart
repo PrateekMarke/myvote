@@ -30,7 +30,10 @@ void loginUser() async {
       Navigator.pushReplacementNamed(context, '/studentDashboard');
     } else if (role == 'manager') {
       Navigator.pushReplacementNamed(context, '/managerDashboard');
-    } else {
+    }else if (role == 'candidate') {
+      Navigator.pushReplacementNamed(context, '/candidateRegister');
+    } 
+    else {
       showError("No valid role assigned");
     }
   } catch (e) {
