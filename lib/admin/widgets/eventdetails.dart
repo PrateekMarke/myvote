@@ -63,43 +63,54 @@ class EventDetailsPage extends StatelessWidget {
                       style: TextStyle(fontSize: 18),
                     ),
                     SizedBox(height: 10),
-                  Expanded(
+             Expanded(
   child: candidates.isEmpty
       ? Center(child: Text("No candidates enrolled."))
       : ListView.builder(
           itemCount: candidates.length,
           itemBuilder: (context, index) {
-            final candidate = candidates[index];
-            final name = candidate['name'] ?? 'Unnamed';
-            final email = candidate['email'] ?? '';
-          
-            final department = candidate['department'] ?? 'N/A';
-            final year = candidate['year'] ?? 'N/A';
-            final mobile = candidate['mobile'] ?? 'N/A';
+            final enrollment = candidates[index];
+            final candidateId = enrollment['candidateId'];
 
-            return Card(
-              margin: EdgeInsets.symmetric(vertical: 8),
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(name, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 4),
-                    Text("Email: $email"),
-             
-                    Text("Department: $department"),
-                    Text("Year: $year"),
-                    Text("Mobile: $mobile"),
-                  ],
-                ),
-              ),
+            return FutureBuilder<DocumentSnapshot>(
+              future: _firestore.collection('candidates').doc(candidateId).get(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return SizedBox.shrink(); // or a loading tile
+                }
+
+                final candidate = snapshot.data!;
+                final name = candidate['name'] ?? 'Unnamed';
+                final email = candidate['email'] ?? '';
+                final department = candidate['department'] ?? 'N/A';
+                final year = candidate['year'] ?? 'N/A';
+                final mobile = candidate['mobile'] ?? 'N/A';
+
+                return Card(
+                  margin: EdgeInsets.symmetric(vertical: 8),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(name, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        SizedBox(height: 4),
+                        Text("Email: $email"),
+                        Text("Department: $department"),
+                        Text("Year: $year"),
+                        Text("Mobile: $mobile"),
+                      ],
+                    ),
+                  ),
+                );
+              },
             );
           },
         ),
-)
+),
+
 
                   ],
                 ),

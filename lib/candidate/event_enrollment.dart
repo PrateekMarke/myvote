@@ -55,31 +55,50 @@ class _CandidateEnrollmentPageState extends State<CandidateEnrollmentPage> {
     }
   }
 
-  Future<void> _enrollCandidate() async {
-    if (_userData == null || _isEnrolled) return;
+void _enrollCandidate() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
 
-    setState(() => _isLoading = true);
+  try {
+    final candidateSnapshot = await FirebaseFirestore.instance
+        .collection('candidates')
+        .where('email', isEqualTo: user.email)
+        .limit(1)
+        .get();
 
-    await FirebaseFirestore.instance.collection('candidates').add({
-      'name': _userData!['name'],
-      'email': _userData!['email'],
-      'studentId': _userData!['studentId'],
-      'department': _userData!['department'],
-      'year': _userData!['year'],
-      'mobile': _userData!['mobile'],
-      'eventId': widget.eventId,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
+    if (candidateSnapshot.docs.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Candidate profile not found.')),
+      );
+      return;
+    }
 
-    setState(() {
-      _isEnrolled = true;
-      _isLoading = false;
-    });
+    final candidateData = candidateSnapshot.docs.first.data();
+
+    // Save enrollment entry (you can reuse the same 'candidates' collection, or create a subcollection under event)
+  await FirebaseFirestore.instance
+    .collection('event_enrollments')
+    .doc(widget.eventId)
+    .collection('candidates')
+    .doc(FirebaseAuth.instance.currentUser!.uid)
+    .set({
+  'candidateId': candidateSnapshot.docs.first.id, // ID from candidates collection
+  'name': candidateData['name'],
+  'email': candidateData['email'],
+  'timestamp': FieldValue.serverTimestamp(),
+});
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Enrollment successful!")),
+      SnackBar(content: Text('Successfully enrolled in the event!')),
+    );
+  } catch (e) {
+    print('Enrollment Error: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Enrollment failed. Please try again.')),
     );
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

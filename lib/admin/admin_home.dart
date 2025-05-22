@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:myvote/admin/userManagement.dart';
 
 import 'VotingEventPage.dart';
-import 'resultpage.dart';
-import 'showEvents.dart';
+import '../resultpage.dart';
+import '../showEvents.dart';
 
 class ManagerDashboard extends StatefulWidget {
   @override

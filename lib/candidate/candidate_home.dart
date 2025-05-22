@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:myvote/candidate/candidate_content.dart';
-import 'package:myvote/admin/showEvents.dart';
-import 'package:myvote/admin/resultpage.dart';
+import 'package:myvote/showEvents.dart';
+import 'package:myvote/resultpage.dart';
 
 class CandidateHomePage extends StatefulWidget {
   @override
