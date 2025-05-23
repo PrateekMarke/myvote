@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:myvote/admin/userManagement.dart';
+import 'package:myvote/core/utils/widgets/custom_buttom_nav.dart';
 
 import 'VotingEventPage.dart';
 import '../resultpage.dart';
@@ -21,13 +23,12 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
     ResultsPage(),               
   ];
 
-  final List<String> _titles = [
-    "User Management",
-    "Create Voting Event",
-    "Show Events",
-    "Results",
-  ];
-
+  final List<BottomNavItem> _navItems = [
+  BottomNavItem(icon: Icons.home, label: "Home"),
+  BottomNavItem(icon: Icons.event_seat_rounded, label: "Create Event"),
+  BottomNavItem(icon: Icons.event, label: "Events"),
+  BottomNavItem(icon: Icons.bar_chart, label: "Results"),
+];
   void _onItemTapped(int index) {
     setState(() => _selectedIndex = index);
   }
@@ -36,30 +37,22 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
 Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
-      title: Text(_titles[_selectedIndex]),
+      title: Text(_navItems[_selectedIndex].label),
       actions: [
         IconButton(
           icon: Icon(Icons.logout),
           onPressed: () async {
            await FirebaseAuth.instance.signOut();
-            Navigator.of(context).pushReplacementNamed('/');
+           context.go('/');
+
 
           },
         ),
       ],
     ),
     body: _pages[_selectedIndex],
-    bottomNavigationBar: BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: _onItemTapped,
-      type: BottomNavigationBarType.fixed,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.add_box), label: 'Create Event'),
-        BottomNavigationBarItem(icon: Icon(Icons.event), label: 'Show Events'),
-        BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Results'),
-      ],
-    ),
+    bottomNavigationBar: CustomBottomNavBar(currentIndex: _selectedIndex, onTap: _onItemTapped, items: _navItems)
+
   );
 }
 }

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'user_role.dart'; // import your global role file
-
+import 'package:go_router/go_router.dart';
+import 'user_role.dart';
 class WelcomePage extends StatelessWidget {
-  void onRoleSelected(BuildContext context, String role) {
-    UserRole.selectedRole = role;
-         Navigator.pushNamed(context, '/login');
+  const WelcomePage({super.key});
 
-  }
+  void onRoleSelected(BuildContext context, String role) {
+  UserRole.selectedRole = role;
+  context.go('/login?role=$role'); 
+}
+
 
   @override
   Widget build(BuildContext context) {

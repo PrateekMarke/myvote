@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:myvote/core/utils/widgets/customelavatedbutton.dart';
+import 'package:myvote/core/utils/widgets/customtextfield.dart';
+import 'package:myvote/core/utils/widgets/validator.dart';
 
-import 'candidate_home.dart'; // Your candidate home page
 
 class CandidateRegistrationPage extends StatefulWidget {
   @override
@@ -33,13 +36,8 @@ class _CandidateRegistrationPageState extends State<CandidateRegistrationPage> {
     final candidateDoc = await FirebaseFirestore.instance.collection('candidates').doc(uid).get();
 
     if (candidateDoc.exists) {
-      // Candidate already registered, redirect to home
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => CandidateHomePage()),
-      );
+      context.go('/candidateHome');
     } else {
-      // Proceed with registration
       fetchUserData();
     }
   }
@@ -62,6 +60,8 @@ class _CandidateRegistrationPageState extends State<CandidateRegistrationPage> {
   }
 
   Future<void> submitRegistration() async {
+    if (!_formKey.currentState!.validate()) return;
+
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
@@ -75,10 +75,7 @@ class _CandidateRegistrationPageState extends State<CandidateRegistrationPage> {
       'timestamp': FieldValue.serverTimestamp(),
     });
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => CandidateHomePage()),
-    );
+    context.go('/candidateHome');
   }
 
   @override
@@ -89,45 +86,51 @@ class _CandidateRegistrationPageState extends State<CandidateRegistrationPage> {
           ? Center(child: CircularProgressIndicator())
           : Padding(
               padding: EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  children: [
-                    Text("Name: $name", style: TextStyle(fontSize: 16)),
-                    SizedBox(height: 8),
-                    Text("Email: $email", style: TextStyle(fontSize: 16)),
-                    SizedBox(height: 16),
-                    TextFormField(
-                      controller: _studentIdController,
-                      decoration: InputDecoration(labelText: 'Student ID'),
-                      validator: (value) => value!.isEmpty ? 'Enter Student ID' : null,
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Form(
+                    key: _formKey,
+                    child: ListView(
+                      children: [
+                        Text("Name: $name", style: TextStyle(fontSize: 16)),
+                        SizedBox(height: 8),
+                        Text("Email: $email", style: TextStyle(fontSize: 16)),
+                        SizedBox(height: 16),
+                        CustomTextField(
+                          controller: _studentIdController,
+                          label: 'Student ID',
+                          validator: (value) => emptyFieldValidator(value, 'Student ID'),
+                        ),
+                        SizedBox(height: 12),
+                        CustomTextField(
+                          controller: _departmentController,
+                          label: 'Department',
+                          validator: (value) => emptyFieldValidator(value, 'Department'),
+                        ),
+                        SizedBox(height: 12),
+                        CustomTextField(
+                          controller: _yearController,
+                          label: 'Year',
+                          validator: (value) => emptyFieldValidator(value, 'Year'),
+                        ),
+                        SizedBox(height: 12),
+                        CustomTextField(
+                          controller: _mobileController,
+                          label: 'Mobile Number',
+                          keyboardType: TextInputType.phone,
+                          validator: (value) => evalPhone(value)
+                        ),
+                        SizedBox(height: 20),
+                        CustomElevatedButton(
+                          text: "Submit",
+                          onPressed: submitRegistration,
+                        ),
+                      ],
                     ),
-                    TextFormField(
-                      controller: _departmentController,
-                      decoration: InputDecoration(labelText: 'Department'),
-                      validator: (value) => value!.isEmpty ? 'Enter Department' : null,
-                    ),
-                    TextFormField(
-                      controller: _yearController,
-                      decoration: InputDecoration(labelText: 'Year'),
-                      validator: (value) => value!.isEmpty ? 'Enter Year' : null,
-                    ),
-                    TextFormField(
-                      controller: _mobileController,
-                      decoration: InputDecoration(labelText: 'Mobile Number'),
-                      keyboardType: TextInputType.phone,
-                      validator: (value) => value!.isEmpty ? 'Enter Mobile Number' : null,
-                    ),
-                    SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          submitRegistration();
-                        }
-                      },
-                      child: Text("Submit"),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
