@@ -40,34 +40,39 @@ class _CreateVotingEventPageState extends State<CreateVotingEventPage> {
   }
 
 
-  Future<void> _submitForm() async {
-      final DateTime eventDateTime = DateTime(
+Future<void> _submitForm() async {
+  if (_formKey.currentState!.validate() && _selectedDate != null && _selectedTime != null) {
+    final DateTime startTime = DateTime(
       _selectedDate!.year,
       _selectedDate!.month,
       _selectedDate!.day,
       _selectedTime!.hour,
       _selectedTime!.minute,
     );
-    if (_formKey.currentState!.validate()) {
-      final eventData = {
-        'eventName': _eventNameController.text.trim(),
-        // 'timeLimit': int.tryParse(_timeLimitController.text.trim()) ?? 0,
-        'timeLimit': eventDateTime.toIso8601String(),
-        'candidates': int.tryParse(_candidateCountController.text.trim()) ?? 0,
-        'voters': int.tryParse(_voterCountController.text.trim()) ?? 0,
-        'rules': _rulesController.text.trim(),
-        'createdAt': Timestamp.now(),
-      };
 
-      try {
-        await _firestore.collection('voting_events').add(eventData);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ Voting event created')));
-        // Navigator.pop(context);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ Failed to create event')));
-      }
+    final DateTime endTime = startTime.add(Duration(
+      minutes: int.tryParse(_timeLimitController.text.trim()) ?? 30,
+    ));
+
+    final eventData = {
+      'eventName': _eventNameController.text.trim(),
+      'startTime': startTime.toIso8601String(),
+      'endTime': endTime.toIso8601String(),
+      'candidates': int.tryParse(_candidateCountController.text.trim()) ?? 0,
+      'voters': int.tryParse(_voterCountController.text.trim()) ?? 0,
+      'rules': _rulesController.text.trim(),
+      'createdAt': Timestamp.now(),
+    };
+
+    try {
+      await _firestore.collection('voting_events').add(eventData);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ Voting event created')));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ Failed to create event')));
     }
   }
+}
+
 
   @override
   void dispose() {

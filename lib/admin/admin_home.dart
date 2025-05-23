@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:myvote/admin/userManagement.dart';
 
-import 'VotingEventPage.dart';
+import 'CreateEventPage.dart';
 import '../resultpage.dart';
 import '../showEvents.dart';
 

@@ -8,6 +8,7 @@ import 'package:myvote/student/studentVoting.dart';
 class ShowEventsPage extends StatelessWidget {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String userRole;
+
   ShowEventsPage({super.key, required this.userRole});
 
   @override
@@ -28,82 +29,128 @@ class ShowEventsPage extends StatelessWidget {
           return ListView.builder(
             itemCount: events.length,
             itemBuilder: (context, index) {
-              final event = snapshot.data!.docs[index];
+              final event = events[index];
               final eventName = event['eventName'];
 
-              // Parse Firestore timeLimit to DateTime
-              final String timeLimitString = event['timeLimit'];
-              final DateTime dateTime = DateTime.parse(timeLimitString);
+              // Safe parsing startTime and endTime strings
+              final String? startTimeString =
+                  event.data().toString().contains('startTime') ? event['startTime'] : null;
+              final String? endTimeString =
+                  event.data().toString().contains('endTime') ? event['endTime'] : null;
 
-              // Format the date and time
-              final formattedDate = DateFormat.yMMMd().format(dateTime);
-              final formattedTime = DateFormat.jm().format(dateTime);
-              return GestureDetector(
-                onTap: () {
-                 if (userRole == 'manager') {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => EventDetailsPage(
-        eventId: event.id,
-        eventName: eventName,
-       
-      ),
-    ),
-  );
-} else if (userRole == 'candidate') {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => CandidateEnrollmentPage(eventId: event.id, eventName: eventName, rules: event['rules'] ?? 'No rules specified.',),
-    ),
-  );
-} else if (userRole == 'student') {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => StudentVotingPage(eventId: event.id, eventName: eventName),
-    ),
-  );
-}
+              DateTime? startTime;
+              DateTime? endTime;
 
-                },
+              if (startTimeString != null) startTime = DateTime.tryParse(startTimeString);
+              if (endTimeString != null) endTime = DateTime.tryParse(endTimeString);
+
+              final now = DateTime.now();
+
+              final bool hasStarted = startTime != null ? now.isAfter(startTime) : false;
+              final bool hasEnded = endTime != null ? now.isAfter(endTime) : false;
+
+              final formattedEnd = endTime != null
+                  ? DateFormat('MMM d, yyyy – h:mm a').format(endTime)
+                  : 'Unknown end time';
+
+              Widget card = Opacity(
+                opacity: hasEnded ? 0.5 : 1,
                 child: Card(
                   margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                   elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          eventName,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        Text(eventName,
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                         SizedBox(height: 8),
                         Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.calendar_today, size: 16),
+                            Icon(Icons.timer, size: 16),
                             SizedBox(width: 6),
                             Expanded(
-                              child: Text(
-                                "Event ends on $formattedDate at $formattedTime",
-                                style: TextStyle(fontSize: 16),
-                                softWrap: true,
-                              ),
+                              child: (startTime != null && endTime != null)
+                                  ? hasStarted && !hasEnded
+                                      ? StreamBuilder(
+                                          stream: Stream.periodic(Duration(seconds: 1)),
+                                          builder: (_, __) {
+                                            final updatedNow = DateTime.now();
+                                            final remaining = endTime!.difference(updatedNow);
+                                            if (remaining.isNegative) {
+                                              return Text("⏰ Voting has ended",
+                                                  style: TextStyle(color: Colors.red));
+                                            }
+                                            final mins = remaining.inMinutes.remainder(60);
+                                            final secs = remaining.inSeconds.remainder(60);
+                                            return Text(
+                                              "⏳ Ends in ${remaining.inHours}h ${mins}m ${secs}s",
+                                              style: TextStyle(color: Colors.green),
+                                            );
+                                          },
+                                        )
+                                      : Text(
+                                          hasEnded
+                                              ? "🛑 Voting ended on $formattedEnd"
+                                              : "⏱ Voting starts at ${DateFormat.jm().format(startTime!)}",
+                                          style: TextStyle(color: Colors.orange),
+                                        )
+                                  : Text("ℹ️ Event time info not available",
+                                      style: TextStyle(color: Colors.grey)),
                             ),
                           ],
                         ),
                       ],
                     ),
                   ),
+                ),
+              );
+
+              // Enable tap for admin and candidate always
+              // Enable for students only if voting not ended
+              final bool canTap =
+                  (userRole == 'manager' || userRole == 'candidate') || (userRole == 'student' && !hasEnded);
+
+              return InkWell(
+                onTap: canTap
+                    ? () {
+                        if (userRole == 'manager') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => EventDetailsPage(
+                                eventId: event.id,
+                                eventName: eventName,
+                              ),
+                            ),
+                          );
+                        } else if (userRole == 'candidate') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => CandidateEnrollmentPage(
+                                eventId: event.id,
+                                eventName: eventName,
+                                rules: event['rules'] ?? 'No rules specified.',
+                              ),
+                            ),
+                          );
+                        } else if (userRole == 'student') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  StudentVotingPage(eventId: event.id, eventName: eventName),
+                            ),
+                          );
+                        }
+                      }
+                    : null,
+                child: AbsorbPointer(
+                  absorbing: !canTap,
+                  child: card,
                 ),
               );
             },

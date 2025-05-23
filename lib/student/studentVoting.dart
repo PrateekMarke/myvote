@@ -13,60 +13,72 @@ class StudentVotingPage extends StatefulWidget {
 }
 
 class _StudentVotingPageState extends State<StudentVotingPage> {
-  bool hasVoted = false;
+  List<Map<String, dynamic>> candidatesWithDetails = [];
   String? votedCandidateId;
-  String studentId = FirebaseAuth.instance.currentUser!.uid;
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    checkIfVoted();
+    _loadCandidates();
   }
 
-  Future<void> checkIfVoted() async {
-    final voteDoc = await FirebaseFirestore.instance
-        .collection('votes')
-        .doc(widget.eventId)
-        .collection('voters')
-        .doc(studentId)
-        .get();
-
-    if (voteDoc.exists) {
-      setState(() {
-        hasVoted = true;
-        votedCandidateId = voteDoc['candidateId'];
-      });
-    }
-  }
-
-  Future<void> voteForCandidate(String candidateId) async {
-    if (hasVoted) return;
-
-    final eventRef = FirebaseFirestore.instance
-        .collection('events')
+  Future<void> _loadCandidates() async {
+    final enrollmentSnapshot = await FirebaseFirestore.instance
+        .collection('event_enrollments')
         .doc(widget.eventId)
         .collection('candidates')
-        .doc(candidateId);
+        .get();
 
-    final voterRef = FirebaseFirestore.instance
-        .collection('votes')
-        .doc(widget.eventId)
-        .collection('voters')
-        .doc(studentId);
+    final List<Map<String, dynamic>> enrichedCandidates = [];
 
-    await FirebaseFirestore.instance.runTransaction((transaction) async {
-      final candidateSnapshot = await transaction.get(eventRef);
-      final currentVotes = candidateSnapshot['votes'] ?? 0;
+    for (var doc in enrollmentSnapshot.docs) {
+      final data = doc.data();
+      final candidateId = doc.id;
 
-      transaction.update(eventRef, {'votes': currentVotes + 1});
-      transaction.set(voterRef, {
-        'candidateId': candidateId,
-        'votedAt': FieldValue.serverTimestamp(),
+      final fullProfile = await FirebaseFirestore.instance
+          .collection('candidates')
+          .doc(candidateId)
+          .get();
+
+      enrichedCandidates.add({
+        'id': candidateId,
+        'name': data['name'] ?? '',
+        'year': fullProfile['year'] ?? 'N/A',
+        'department': fullProfile['department'] ?? 'N/A',
       });
-    });
+    }
+
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    final voteDoc = await FirebaseFirestore.instance
+        .collection('event_enrollments')
+        .doc(widget.eventId)
+        .collection('votes')
+        .doc(userId)
+        .get();
 
     setState(() {
-      hasVoted = true;
+      candidatesWithDetails = enrichedCandidates;
+      votedCandidateId = voteDoc.exists ? voteDoc['votedFor'] : null;
+      isLoading = false;
+    });
+  }
+
+  Future<void> _vote(String candidateId) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+
+    final voteRef = FirebaseFirestore.instance
+        .collection('event_enrollments')
+        .doc(widget.eventId)
+        .collection('votes')
+        .doc(userId);
+
+    final existingVote = await voteRef.get();
+    if (existingVote.exists) return;
+
+    await voteRef.set({'votedFor': candidateId, 'timestamp': Timestamp.now()});
+
+    setState(() {
       votedCandidateId = candidateId;
     });
   }
@@ -74,49 +86,32 @@ class _StudentVotingPageState extends State<StudentVotingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Vote Now - ${widget.eventName}")),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('events')
-            .doc(widget.eventId)
-            .collection('candidates')
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting)
-            return Center(child: CircularProgressIndicator());
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
-            return Center(child: Text('No candidates found.'));
+      appBar: AppBar(title: Text("Vote for Event: ${widget.eventName}")),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              itemCount: candidatesWithDetails.length,
+              itemBuilder: (context, index) {
+                final candidate = candidatesWithDetails[index];
+                final alreadyVoted = votedCandidateId != null;
 
-          return ListView.builder(
-            itemCount: snapshot.data!.docs.length,
-            itemBuilder: (context, index) {
-              final candidate = snapshot.data!.docs[index];
-              final candidateId = candidate.id;
-              final name = candidate['name'];
-              final bio = candidate['bio'];
-              final votes = candidate['votes'] ?? 0;
-
-              final isVotedForThis = votedCandidateId == candidateId;
-
-              return Card(
-                margin: EdgeInsets.all(10),
-                child: ListTile(
-                  title: Text(name),
-                  subtitle: Text(bio),
-                  trailing: hasVoted
-                      ? (isVotedForThis
-                          ? Icon(Icons.check_circle, color: Colors.green)
-                          : Icon(Icons.how_to_vote, color: Colors.grey))
-                      : ElevatedButton(
-                          onPressed: () => voteForCandidate(candidateId),
-                          child: Text("Vote"),
-                        ),
-                ),
-              );
-            },
-          );
-        },
-      ),
+                return Card(
+                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: ListTile(
+                    title: Text(candidate['name'], style: TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text("Year: ${candidate['year']} | Dept: ${candidate['department']}"),
+                    trailing: alreadyVoted
+                        ? (votedCandidateId == candidate['id']
+                            ? Icon(Icons.check_circle, color: Colors.green)
+                            : SizedBox.shrink())
+                        : ElevatedButton(
+                            child: Text("Vote"),
+                            onPressed: () => _vote(candidate['id']),
+                          ),
+                  ),
+                );
+              },
+            ),
     );
   }
 }
