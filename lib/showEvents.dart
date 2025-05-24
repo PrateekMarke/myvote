@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:myvote/admin/widgets/eventdetails.dart';
 import 'package:myvote/candidate/event_enrollment.dart';
@@ -114,40 +115,30 @@ class ShowEventsPage extends StatelessWidget {
                   (userRole == 'manager' || userRole == 'candidate') || (userRole == 'student' && !hasEnded);
 
               return InkWell(
-                onTap: canTap
-                    ? () {
-                        if (userRole == 'manager') {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => EventDetailsPage(
-                                eventId: event.id,
-                                eventName: eventName,
-                              ),
-                            ),
-                          );
-                        } else if (userRole == 'candidate') {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => CandidateEnrollmentPage(
-                                eventId: event.id,
-                                eventName: eventName,
-                                rules: event['rules'] ?? 'No rules specified.',
-                              ),
-                            ),
-                          );
-                        } else if (userRole == 'student') {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  StudentVotingPage(eventId: event.id, eventName: eventName),
-                            ),
-                          );
-                        }
-                      }
-                    : null,
+               onTap: canTap
+    ? () {
+        if (userRole == 'manager') {
+          context.go(
+            '/event-details/${event.id}',
+            extra: eventName,
+          );
+        } else if (userRole == 'candidate') {
+          context.go(
+            '/candidate-enroll/${event.id}',
+            extra: {
+              'eventName': eventName,
+              'rules': event['rules'] ?? 'No rules specified.',
+            },
+          );
+        } else if (userRole == 'student') {
+          context.go(
+            '/student-voting/${event.id}',
+            extra: eventName,
+          );
+        }
+      }
+    : null,
+
                 child: AbsorbPointer(
                   absorbing: !canTap,
                   child: card,

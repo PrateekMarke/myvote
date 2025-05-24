@@ -1,6 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:myvote/core/utils/widgets/custom_elevatedbutton.dart';
+
+import 'package:myvote/core/utils/widgets/customtextfield.dart';
+import 'package:myvote/core/utils/widgets/validator.dart';
 
 class UserManagementPage extends StatefulWidget {
   @override
@@ -8,16 +12,21 @@ class UserManagementPage extends StatefulWidget {
 }
 
 class UserManagementPageState extends State<UserManagementPage> {
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
   String _selectedRole = 'student';
   bool isCreating = false;
+   bool isPasswordVisible = false;
 
   final _auth = FirebaseAuth.instance;
   final _firestore = FirebaseFirestore.instance;
 
   Future<void> createUser() async {
+    if (!_formKey.currentState!.validate()) return;
+
+
     setState(() => isCreating = true);
 
     try {
@@ -88,72 +97,125 @@ class UserManagementPageState extends State<UserManagementPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Text("Create New User", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            TextField(controller: _nameController, decoration: InputDecoration(labelText: "Name")),
-            TextField(controller: _emailController, decoration: InputDecoration(labelText: "Email")),
-            TextField(controller: _passwordController, obscureText: true, decoration: InputDecoration(labelText: "Password")),
-            DropdownButton<String>(
-              value: _selectedRole,
-              items: ['student', 'manager', 'candidate'].map((role) {
-                return DropdownMenuItem(value: role, child: Text(role.toUpperCase()));
-              }).toList(),
-              onChanged: (val) => setState(() => _selectedRole = val!),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          // CREATE USER FORM
+          Form(
+             key: _formKey,
+            child: Card(
+              color: isDark ? Colors.grey[850] : Colors.grey[100],
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Text("Create New User", style: theme.textTheme.headlineLarge),
+                    const SizedBox(height: 10),
+                    CustomTextField(prefixIcon: const Icon(Icons.person), label: "Name", controller: _nameController, validator: (value) => emptyFieldValidator(value, "Name"),),
+                    CustomTextField(prefixIcon: const Icon(Icons.email), label: "Email", controller: _emailController, keyboardType: TextInputType.emailAddress,
+                    validator: (value) => evalEmail(value),),
+                    CustomTextField(
+                      label: "Password",
+                      controller: _passwordController,
+                      prefixIcon: const Icon(Icons.lock),
+                      suffixIcon:
+                        isPasswordVisible
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                    obscureText: !isPasswordVisible,
+                    onSuffixPressed: () {
+                      setState(() {
+                        isPasswordVisible = !isPasswordVisible;
+                      });
+                    },
+                    validator:
+                        (value) => emptyFieldValidator(value, "Password"),
+                    ),
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<String>(
+                      value: _selectedRole,
+                      items: ['student', 'manager', 'candidate'].map((role) {
+                        return DropdownMenuItem(value: role, child: Text(role.toUpperCase()));
+                      }).toList(),
+                      decoration: const InputDecoration(
+                        labelText: "Select Role",
+                        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                      ),
+                      onChanged: (val) => setState(() => _selectedRole = val!),
+                    ),
+                    const SizedBox(height: 20),
+                    isCreating
+                        ? const CircularProgressIndicator()
+                        : CustomElevatedButton(
+                            onPressed: createUser,
+                            text: "Create User",
+                          ),
+                  ],
+                ),
+              ),
             ),
-            SizedBox(height: 20),
-            isCreating
-                ? CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: createUser,
-                    child: Text("Create User"),
-                  ),
-            SizedBox(height: 30),
-            Text("All Users", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            StreamBuilder<QuerySnapshot>(
-              stream: getUsersStream(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) return CircularProgressIndicator();
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return Text("No users found");
+          ),
+          const SizedBox(height: 30),
 
-                final users = snapshot.data!.docs;
+          // ALL USERS LIST
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text("All Users", style: theme.textTheme.headlineLarge),
+          ),
+          const SizedBox(height: 10),
+          StreamBuilder<QuerySnapshot>(
+            stream: getUsersStream(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) return const CircularProgressIndicator();
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const Text("No users found");
 
-                return ListView.builder(
-                  itemCount: users.length,
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    final user = users[index];
-                    final email = user['email'];
-                    final role = user['role'];
-                    final name = user.data().toString().contains('name') ? user['name'] : '';
+              final users = snapshot.data!.docs;
 
-                    return ListTile(
+              return ListView.separated(
+                itemCount: users.length,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  final user = users[index];
+                  final email = user['email'];
+                  final role = user['role'];
+                  final name = user.data().toString().contains('name') ? user['name'] : '';
+
+                  return Card(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    color: isDark ? Colors.grey[900] : Colors.white,
+                    elevation: 2,
+                    child: ListTile(
                       title: Text(name.isEmpty ? email : name),
                       subtitle: Text("Email: $email\nRole: $role"),
+                      isThreeLine: true,
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: Icon(Icons.edit, color: Colors.blue),
+                            icon: const Icon(Icons.edit, color: Colors.blue),
                             onPressed: () => showUpdateDialog(user),
                           ),
                           IconButton(
-                            icon: Icon(Icons.delete, color: Colors.red),
+                            icon: const Icon(Icons.delete, color: Colors.red),
                             onPressed: () => deleteUser(user.id),
                           ),
                         ],
                       ),
-                    );
-                  },
-                );
-              },
-            )
-          ],
-        ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
       ),
     );
   }

@@ -105,12 +105,7 @@ Future<void> _submitForm() async {
                 decoration: InputDecoration(labelText: "Event Name"),
                 validator: (value) => value!.isEmpty ? "Enter event name" : null,
               ),
-              // TextFormField(
-              //   controller: _timeLimitController,
-              //   decoration: InputDecoration(labelText: "Time Limit (in minutes)"),
-              //   keyboardType: TextInputType.number,
-              //   validator: (value) => value!.isEmpty ? "Enter time limit" : null,
-              // ),
+         
                  SizedBox(height: 12),
             Row(
               children: [

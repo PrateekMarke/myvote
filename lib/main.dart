@@ -1,47 +1,54 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:myvote/admin/admin_home.dart';
-import 'package:myvote/candidate/candidate_home.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:myvote/core/routes/path.dart';
+import 'package:myvote/core/theme/data/datasources/theme_source.dart';
+import 'package:myvote/core/theme/data/repositories/theme._repositoryImpl.dart';
+import 'package:myvote/core/theme/domain/usecases/getTheme.dart';
+import 'package:myvote/core/theme/domain/usecases/saveTheme.dart';
+import 'package:myvote/core/theme/presentation/bloc/theme_bloc.dart';
+import 'package:myvote/core/theme/presentation/bloc/theme_state.dart';
 
-import 'package:myvote/candidate/registration.dart';
-import 'package:myvote/auth/login.dart';
-import 'package:myvote/student/student_home.dart';
-
-import 'package:myvote/auth/welcome.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(MyApp());
+  final localDataSource = ThemeLocalDataSourceImpl();
+  final themeRepository = ThemeRepositoryImpl(localDataSource);
+  final getThemeUseCase = GetThemeUseCase(themeRepository);
+  final saveThemeUseCase = SaveThemeUseCase(themeRepository);
+  runApp(
+    MyApp(getThemeUseCase: getThemeUseCase, saveThemeUseCase: saveThemeUseCase),
+  );
 }
 
-
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
+  final GetThemeUseCase getThemeUseCase;
+  final SaveThemeUseCase saveThemeUseCase;
+  const MyApp({
+    super.key,
+    required this.getThemeUseCase,
+    required this.saveThemeUseCase,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-  debugShowCheckedModeBanner: false,
-  initialRoute: '/',
-routes: {
-  '/': (context) => WelcomePage(),
-  '/candidateHome': (context) => CandidateHomePage(),
-  '/candidateRegister': (context) => CandidateRegistrationPage(),
-  '/studentDashboard': (context) => StudentDashboard(),
-  '/managerDashboard': (context) => ManagerDashboard(),
-  
-},
-onGenerateRoute: (settings) {
-  if (settings.name == '/login') {
-    return MaterialPageRoute(builder: (_) => LoginPage());
-  }
-  return null;
-},
-
-);
-
+    return BlocProvider(
+      create:
+          (_) => ThemeBloc(
+            getThemeUseCase: getThemeUseCase,
+            saveThemeUseCase: saveThemeUseCase,
+          ),
+      child: BlocBuilder<ThemeBloc, ThemeState>(
+        builder: (context, state) {
+          return MaterialApp.router(
+            title: 'MyMote',
+            theme: state.theme.themeData,
+            darkTheme: state.theme.themeData,
+            routerConfig: router,
+          );
+        },
+      ),
+    );
   }
 }
-
