@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:myvote/core/utils/widgets/custom_butto,m_nav.dart';
-import 'package:myvote/resultpage.dart';
+import 'package:myvote/resultpageList.dart';
 import 'package:myvote/showEvents.dart';
 
 class StudentDashboard extends StatefulWidget {
@@ -15,7 +15,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
 
   final List<Widget> _pages = [
     ShowEventsPage(userRole: 'student'),
-    ResultsPage(),
+    ResultListPage(),
   ];
 
   final List<BottomNavItem> _navItems = [

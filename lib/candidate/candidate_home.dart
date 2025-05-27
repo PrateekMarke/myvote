@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:myvote/candidate/candidate_content.dart';
 import 'package:myvote/core/utils/widgets/custom_butto,m_nav.dart';
 import 'package:myvote/showEvents.dart';
-import 'package:myvote/resultpage.dart';
+import 'package:myvote/resultpageList.dart';
 
 class CandidateHomePage extends StatefulWidget {
   @override
@@ -62,7 +62,7 @@ class _CandidateHomePageState extends State<CandidateHomePage> {
     final List<Widget> _pages = [
       CandidateHomeContent(),
       ShowEventsPage(userRole: userRole!), 
-      ResultsPage(),
+      ResultListPage(),
     ];
 
   final List<BottomNavItem> _navItems = [

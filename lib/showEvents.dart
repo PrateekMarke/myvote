@@ -115,12 +115,12 @@ class ShowEventsPage extends StatelessWidget {
                onTap: canTap
     ? () {
         if (userRole == 'manager') {
-          context.go(
+          context.push(
             '/event-details/${event.id}',
             extra: eventName,
           );
         } else if (userRole == 'candidate') {
-          context.go(
+          context.push(
             '/candidate-enroll/${event.id}',
             extra: {
               'eventName': eventName,
@@ -128,7 +128,7 @@ class ShowEventsPage extends StatelessWidget {
             },
           );
         } else if (userRole == 'student') {
-          context.go(
+          context.push(
             '/student-voting/${event.id}',
             extra: eventName,
           );

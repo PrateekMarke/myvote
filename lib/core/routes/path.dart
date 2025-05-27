@@ -6,6 +6,7 @@ import 'package:myvote/auth/welcome.dart';
 import 'package:myvote/candidate/candidate_home.dart';
 import 'package:myvote/candidate/event_enrollment.dart';
 import 'package:myvote/candidate/registration.dart';
+import 'package:myvote/result_page.dart';
 import 'package:myvote/student/studentVoting.dart';
 import 'package:myvote/student/student_home.dart';
 final GoRouter router = GoRouter(
@@ -58,11 +59,20 @@ final GoRouter router = GoRouter(
         return StudentVotingPage(eventId: eventId, eventName: eventName);
       },
     ),
+    GoRoute(
+  path: '/results/:eventId',
+  builder: (context, state) {
+    final eventId = state.pathParameters['eventId']!;
+    final eventName = state.extra as String;
+
+    return ResultPage(eventId: eventId, eventName: eventName);
+  },
+),
+
 
 
 
 
   ],
 );
-
 

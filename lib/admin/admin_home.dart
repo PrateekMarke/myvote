@@ -5,7 +5,7 @@ import 'package:myvote/admin/CreateEventPage.dart';
 import 'package:myvote/admin/userManagement.dart';
 import 'package:myvote/core/utils/widgets/custom_butto,m_nav.dart';
 
-import '../resultpage.dart';
+import '../resultpageList.dart';
 import '../showEvents.dart';
 
 class ManagerDashboard extends StatefulWidget {
@@ -20,7 +20,7 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
     UserManagementPage(),        
     CreateVotingEventPage(),      
     ShowEventsPage(userRole: 'manager',),            
-    ResultsPage(),               
+   ResultListPage(),               
   ];
 
   final List<BottomNavItem> _navItems = [

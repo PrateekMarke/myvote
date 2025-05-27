@@ -17,6 +17,7 @@ void main() async {
   final themeRepository = ThemeRepositoryImpl(localDataSource);
   final getThemeUseCase = GetThemeUseCase(themeRepository);
   final saveThemeUseCase = SaveThemeUseCase(themeRepository);
+  
   runApp(
     MyApp(getThemeUseCase: getThemeUseCase, saveThemeUseCase: saveThemeUseCase),
   );
@@ -25,6 +26,7 @@ void main() async {
 class MyApp extends StatelessWidget {
   final GetThemeUseCase getThemeUseCase;
   final SaveThemeUseCase saveThemeUseCase;
+  
   const MyApp({
     super.key,
     required this.getThemeUseCase,
@@ -34,14 +36,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
+      
       create:
           (_) => ThemeBloc(
             getThemeUseCase: getThemeUseCase,
             saveThemeUseCase: saveThemeUseCase,
           ),
       child: BlocBuilder<ThemeBloc, ThemeState>(
+        
         builder: (context, state) {
           return MaterialApp.router(
+            debugShowCheckedModeBanner: false,
             title: 'MyMote',
             theme: state.theme.themeData,
             darkTheme: state.theme.themeData,
