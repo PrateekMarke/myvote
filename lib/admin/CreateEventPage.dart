@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:myvote/core/utils/widgets/custom_elevatedbutton.dart';
+import 'package:myvote/core/utils/widgets/customtextfield.dart';
+import 'package:myvote/core/utils/widgets/validator.dart';
 
 class CreateVotingEventPage extends StatefulWidget {
   @override
@@ -97,60 +100,74 @@ Future<void> _submitForm() async {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              TextFormField(
-                controller: _eventNameController,
-                decoration: InputDecoration(labelText: "Event Name"),
-                validator: (value) => value!.isEmpty ? "Enter event name" : null,
-              ),
-         
-                 SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _pickDate,
-                    child: Text(formattedDate),
-                  ),
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Create Voting Event",
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    SizedBox(height: 20),
+                    CustomTextField(
+                      controller: _eventNameController,
+                      label: "Event Name",
+                      validator:
+                          (value) => emptyFieldValidator(value, "Event Name"),
+                    ),
+                    SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: CustomElevatedButton(
+                            text: formattedDate,
+                            onPressed: _pickDate,
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: CustomElevatedButton(
+                            text: formattedTime,
+                            onPressed: _pickTime,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 12),
+                    CustomTextField(
+                      controller: _candidateCountController,
+                      label: "Number of Candidates",
+                      keyboardType: TextInputType.number,
+                      validator:
+                          (value) => emptyFieldValidator(
+                            value,
+                            "Number of Candidates",
+                          ),
+                    ),
+                    SizedBox(height: 12),
+                    CustomTextField(
+                      controller: _voterCountController,
+                      label: "Number of Voters",
+                      keyboardType: TextInputType.number,
+                      validator:
+                          (value) =>
+                              emptyFieldValidator(value, "Number of Voters"),
+                    ),
+                    SizedBox(height: 12),
+                    CustomTextField(
+                      controller: _rulesController,
+                      label: "Rules",
+                      maxLines: 5,
+                      validator: (value) => emptyFieldValidator(value, "Rules"),
+                    ),
+                    SizedBox(height: 20),
+                    CustomElevatedButton(
+                      text: "Create Event",
+                      onPressed: _submitForm,
+                    ),
+                  ],
                 ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _pickTime,
-                    child: Text(formattedTime),
-                  ),
-                ),
-              ],
-            ),
-              TextFormField(
-                controller: _candidateCountController,
-                decoration: InputDecoration(labelText: "Number of Candidates"),
-                keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty ? "Enter candidate count" : null,
               ),
-              TextFormField(
-                controller: _voterCountController,
-                decoration: InputDecoration(labelText: "Number of Voters"),
-                keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty ? "Enter voter count" : null,
-              ),
-              TextFormField(
-                controller: _rulesController,
-                decoration: InputDecoration(labelText: "Rules"),
-                maxLines: 5,
-                validator: (value) => value!.isEmpty ? "Enter rules" : null,
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _submitForm,
-                child: Text("Create Event"),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+            ));
   }
 }
