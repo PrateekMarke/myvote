@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:myvote/admin/widgets/eventdetails.dart';
-import 'package:myvote/candidate/event_enrollment.dart';
-import 'package:myvote/student/studentVoting.dart';
+
 
 class ShowEventsPage extends StatelessWidget {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -95,7 +93,7 @@ class ShowEventsPage extends StatelessWidget {
                                       : Text(
                                           hasEnded
                                               ? "🛑 Voting ended on $formattedEnd"
-                                              : "⏱ Voting starts at ${DateFormat.jm().format(startTime!)}",
+                                              : "⏱ Voting starts at ${DateFormat.jm().format(startTime)}",
                                           style: TextStyle(color: Colors.orange),
                                         )
                                   : Text("ℹ️ Event time info not available",
@@ -109,8 +107,7 @@ class ShowEventsPage extends StatelessWidget {
                 ),
               );
 
-              // Enable tap for admin and candidate always
-              // Enable for students only if voting not ended
+
               final bool canTap =
                   (userRole == 'manager' || userRole == 'candidate') || (userRole == 'student' && !hasEnded);
 

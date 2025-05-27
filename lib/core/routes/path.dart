@@ -6,7 +6,6 @@ import 'package:myvote/auth/welcome.dart';
 import 'package:myvote/candidate/candidate_home.dart';
 import 'package:myvote/candidate/event_enrollment.dart';
 import 'package:myvote/candidate/registration.dart';
-import 'package:myvote/showEvents.dart';
 import 'package:myvote/student/studentVoting.dart';
 import 'package:myvote/student/student_home.dart';
 
